@@ -2,12 +2,17 @@
 
 # commit 用のオプションを格納（ただし -m/--message は除外）
 typeset -a PASSTHROUGH_OPTS
+VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -m|--message)
       echo "❌ -m / --message オプションは使用できません。AI が生成します。"
       exit 1
+      ;;
+    -v|--verbose)
+      VERBOSE=true
+      shift
       ;;
     *)
       PASSTHROUGH_OPTS+=("$1")
@@ -23,10 +28,22 @@ if [[ -z "$DIFF" ]]; then
   exit 1
 fi
 
+if [[ "$VERBOSE" == true ]]; then
+  echo "🔍 ステージされた変更:"
+  echo "$DIFF"
+  echo
+fi
+
 # プロンプト
 PROMPT="次の git diff の内容に基づいて、簡潔で意味のあるコミットメッセージを英語で一文で書いてください。
 
 $DIFF"
+
+if [[ "$VERBOSE" == true ]]; then
+  echo "📝 送信するプロンプト:"
+  echo "$PROMPT"
+  echo
+fi
 
 # APIキー確認
 if [[ -z "$OPENAI_API_KEY" ]]; then
@@ -49,8 +66,11 @@ RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
 EOF
 )
 
-echo "=== API Response ==="
-echo "$RESPONSE"
+if [[ "$VERBOSE" == true ]]; then
+  echo "📡 API Response:"
+  echo "$RESPONSE"
+  echo
+fi
 
 # OpenAI API 呼び出し
 COMMIT_MSG=$(echo $RESPONSE | jq -r '.choices[0].message.content')
