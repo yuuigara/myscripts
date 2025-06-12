@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+
+# 引数がなければ usage 表示
+if [[ $# -lt 1 ]]; then
+  echo "Usage: git ai <subcommand> [options]"
+  exit 1
+fi
+
+# 第一引数をサブコマンドとみなす（例: "commit"）
+SUBCOMMAND="$1"
+shift
+
+case "$SUBCOMMAND" in
+  commit)
+    # git-ai-commit が PATH に存在するか確認
+    if ! command -v git-ai-commit >/dev/null 2>&1; then
+      echo "❌ 'git-ai-commit' コマンドが見つかりません。PATH を確認してください。"
+      exit 1
+    fi
+    # 引数をそのまま渡して実行
+    exec git-ai-commit "$@"
+    ;;
+  *)
+    echo "❌ 未対応のサブコマンド: $SUBCOMMAND"
+    echo "利用可能なサブコマンド: commit"
+    exit 1
+    ;;
+esac
